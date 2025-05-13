@@ -308,6 +308,209 @@ Endor(config-router)# network 10.0.0.4 0.0.0.3 area 0
 
 ---
 
+# Misión 7: La Baliza Secreta de Coruscant – Paso a paso en Cisco Packet Tracer
+
+---
+
+## **1. Dispositivos Necesarios**
+
+- 2 Routers Cisco (recomendado: 4321 o 1941)
+- 1 Switch Cisco 2960 (en Coruscant)
+- 1 PC "Bothan" (en Coruscant)
+- 1 PC "Control" (en la Flota)
+- 1 Generic Server (en Coruscant)
+- Cables: straight y serial (o cobre directo según módulos disponibles)
+
+---
+
+## **2. Topología a implementar**
+
+![Topologia2](images/imagen12.png "Topologia2")
+
+---
+
+## **3. Direccionamiento y configuración IP**
+
+### **LAN Coruscant (Switch Cisco 2960)**
+- Servidor:  
+  - IP: 192.168.50.100  
+  - Máscara: 255.255.255.0  
+  - Gateway: 192.168.50.1  
+  - DNS: 192.168.50.100  
+- PC Bothan:  
+  - IP: 192.168.50.50  
+  - Máscara: 255.255.255.0  
+  - Gateway: 192.168.50.1  
+  - DNS: 192.168.50.100  
+
+### **LAN Flota**
+- PC Control:  
+  - IP: 192.168.60.50  
+  - Máscara: 255.255.255.0  
+  - Gateway: 192.168.60.1  
+  - DNS: 192.168.50.100  
+
+### **Enlace WAN (Serial/Ethernet entre routers)**
+- Router Coruscant (WAN):  
+  - IP: 10.0.0.9/30 (255.255.255.252)
+- Router Flota (WAN):  
+  - IP: 10.0.0.10/30 (255.255.255.252)
+
+---
+
+## **4. Paso a paso en Packet Tracer**
+
+### **A. Montaje físico y conexiones**
+
+1. Arrastra los routers, el switch, las PCs y el servidor a la mesa de trabajo.
+2. Conecta:
+   - PC Bothan y Server al Switch en Coruscant.
+   - Switch al Router Coruscant (G0/0).
+   - PC Control al Router Flota (G0/0).
+   - Router Coruscant <-> Router Flota usando Serial DCE/DTE (S0/0/0) o Ethernet (G0/1↔G0/1).
+
+---
+
+### **B. Configuración de interfaces en los routers**
+
+#### **Router Coruscant**
+```plaintext
+Router> enable
+Router# configure terminal
+Router(config)# hostname Coruscant
+Coruscant(config)# interface GigabitEthernet0/0
+Coruscant(config-if)# ip address 192.168.50.1 255.255.255.0
+Coruscant(config-if)# no shutdown
+Coruscant(config)# interface Serial0/0/0
+Coruscant(config-if)# ip address 10.0.0.9 255.255.255.252
+Coruscant(config-if)# clock rate 64000    ! Solo si es DCE
+Coruscant(config-if)# no shutdown
+```
+
+#### **Router Flota**
+```plaintext
+Router> enable
+Router# configure terminal
+Router(config)# hostname Flota
+Flota(config)# interface GigabitEthernet0/0
+Flota(config-if)# ip address 192.168.60.1 255.255.255.0
+Flota(config-if)# no shutdown
+Flota(config)# interface Serial0/0/0
+Flota(config-if)# ip address 10.0.0.10 255.255.255.252
+Flota(config-if)# no shutdown
+```
+
+---
+
+### **C. Rutas estáticas**
+
+#### **Router Coruscant**
+```plaintext
+Coruscant(config)# ip route 0.0.0.0 0.0.0.0 10.0.0.10
+```
+*(Default route: todo lo que no sea 192.168.50.0/24 va a la Flota)*
+
+#### **Router Flota**
+```plaintext
+Flota(config)# ip route 192.168.50.0 255.255.255.0 10.0.0.9
+```
+*(El tráfico hacia 192.168.50.0/24 va a Coruscant)*
+
+---
+
+### **D. Configuración del servidor DNS en Coruscant**
+
+1. Haz clic en el Server (192.168.50.100).
+2. Ve a la pestaña **Config** para la IP, y pon:
+    - IP: 192.168.50.100
+    - Máscara: 255.255.255.0
+    - Gateway: 192.168.50.1
+3. Ve a **Services > DNS**.
+4. Activa DNS (ON).
+5. Añade el registro:
+    - Name: planes.secretos
+    - Address: 192.168.50.100
+    - Type: A
+
+---
+
+### **E. Configuración de IP y DNS en las PCs**
+
+#### **PC Bothan**
+- IP: 192.168.50.50
+- Máscara: 255.255.255.0
+- Gateway: 192.168.50.1
+- DNS: 192.168.50.100
+
+#### **PC Control**
+- IP: 192.168.60.50
+- Máscara: 255.255.255.0
+- Gateway: 192.168.60.1
+- DNS: 192.168.50.100
+
+---
+
+### **F. Configuración de SSH en Router Coruscant**
+
+```plaintext
+Coruscant(config)# ip domain-name rebelion.org
+Coruscant(config)# crypto key generate rsa general-keys modulus 1024
+Coruscant(config)# username admin secret S3cur3P@ss
+Coruscant(config)# line vty 0 4
+Coruscant(config-line)# transport input ssh
+Coruscant(config-line)# login local
+Coruscant(config)# service password-encryption
+```
+
+---
+
+### **G. Pruebas y verificación**
+
+1. **Ping entre PCs**:  
+   - Desde PC Bothan a PC Control y viceversa.
+
+   ![ping](images/imagen11.png "ping control a bothan")
+
+   ![ping2](images/imagen13.png "ping bothan a control")
+
+
+2. **Ping y DNS desde PC Control**:  
+   - `ping planes.secretos`  
+   - `nslookup planes.secretos`
+
+   ![pingdns](images/imagen14.png "pingdns")
+
+3. **Acceder vía SSH al Router Coruscant**:  
+   - Desde PC Control, usa la app SSH (Desktop > SSH Client)  
+   - Host: 10.0.0.9 o 192.168.50.1  
+   - Usuario: admin  
+
+    ![ssh](images/imagen15.png "ssh")
+
+   - Contraseña: S3cur3P@ss
+
+    ![login](images/imagen16.png "login")
+
+
+4. **(Opcional) Servicio HTTP**:  
+   - En el Server, activa HTTP y edita la web con el mensaje secreto.  
+   - Desde PC Control, intenta abrir http://planes.secretos en el navegador.
+
+    ![Web](images/imagen17.png "web")
+
+---
+
+## **Resumen de comandos clave**
+
+- Asignación de IPs a interfaces
+- Rutas estáticas para interconexión
+- Configuración de DNS y prueba de resolución
+- Habilitación de SSH (clave RSA, usuario, líneas VTY)
+
+---
+
+**¡Misión cumplida, Jedi de la red! La seguridad y el sigilo de la Alianza están garantizados.**
+
 ## **Bibliografía**
 
 1. [Definición y tipos de enrutamiento dinámico - Universidad VIU](https://www.universidadviu.com/es/actualidad/nuestros-expertos/definicion-y-tipos-de-enrutamiento-dinamico#:~:text=,IS)
@@ -315,5 +518,4 @@ Endor(config-router)# network 10.0.0.4 0.0.0.3 area 0
 3. [Características de TCP y UDP - LinkedIn](https://www.linkedin.com/advice/0/youre-trying-establish-network-connection-rwzie?lang=es&originalSubdomain=es#:~:text=1%20Caracter%C3%ADsticas%20de%20TCP)
 4. [Cifrado simétrico vs asimétrico - Blog Mailfence](https://blog.mailfence.com/es/cifrado-simetrico-vs-asimetrico/#:~:text=El%20cifrado%20sim%C3%A9trico%20utiliza%20una,el%20mensaje%20se%20descifra%20correctamente)
 
----
 ---
