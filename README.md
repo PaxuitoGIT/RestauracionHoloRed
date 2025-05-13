@@ -201,6 +201,113 @@ Explica la diferencia entre cifrado simétrico y asimétrico, su uso y la import
 
 ---
 
+# Parte II – Misiones Prácticas con Cisco Packet Tracer: Guía Paso a Paso
+
+---
+
+## Misión 6: Red Troncal de la Alianza – Conectando Hoth, Home One y Endor
+
+### **1. Selección de Dispositivos en Packet Tracer**
+
+- **Routers:** 3 × Cisco 4321 (o 1941)
+- **Switches:** 3 × Cisco 2960 (uno para cada base, opcional pero recomendado para simular varias PCs/servidores por LAN)
+- **PCs:** Al menos 1 por LAN (simular usuarios en Hoth, HomeOne, Endor)
+
+---
+
+### **2. Estructura de la Topología**
+
+![Topologia1](images/imagen10.png "Topologia1")
+
+---
+
+### **3. Tabla de Subredes y Direccionamiento**
+
+| Segmento         | Red            | Máscara            | Gateway Router   | Rango de Hosts         | Broadcast      |
+|------------------|----------------|--------------------|------------------|------------------------|---------------|
+| Hoth-LAN         | 10.0.1.0/26    | 255.255.255.192    | 10.0.1.1         | 10.0.1.2 – 10.0.1.62   | 10.0.1.63     |
+| HomeOne-LAN      | 10.0.1.64/27   | 255.255.255.224    | 10.0.1.65        | 10.0.1.66 – 10.0.1.94  | 10.0.1.95     |
+| Endor-LAN        | 10.0.1.96/27   | 255.255.255.224    | 10.0.1.97        | 10.0.1.98 – 10.0.1.126 | 10.0.1.127    |
+| Enlace Hoth-Home | 10.0.0.0/30    | 255.255.255.252    | 10.0.0.1/0.2     | 10.0.0.1-10.0.0.2      | 10.0.0.3      |
+| Enlace Home-Endor| 10.0.0.4/30    | 255.255.255.252    | 10.0.0.5/0.6     | 10.0.0.5-10.0.0.6      | 10.0.0.7      |
+
+---
+
+### **4. Paso a Paso en Packet Tracer**
+
+**a) Montaje Físico y Conexión:**
+  1. Arrastra 3 routers Cisco 4321 y 3 switches Cisco 2960.
+  2. Conecta cada router a su switch mediante cable straight a la interfaz G0/0.
+  3. Conecta PCs a los switches.
+  4. Conecta los routers entre sí usando cables seriales (añade módulo HWIC-2T si usas serial) o cables de cobre directo entre G0/1 y G0/2 (si usas GigabitEthernet en vez de Serial para enlaces WAN).
+
+**b) Configuración de Interfaces (ejemplo en Router Hoth):**
+```plaintext
+Router> enable
+Router# configure terminal
+Router(config)# hostname Hoth
+Hoth(config)# interface GigabitEthernet0/0
+Hoth(config-if)# ip address 10.0.1.1 255.255.255.192
+Hoth(config-if)# no shutdown
+Hoth(config)# interface Serial0/0/0
+Hoth(config-if)# ip address 10.0.0.1 255.255.255.252
+Hoth(config-if)# no shutdown
+```
+Repetir en los otros routers con las IPs correspondientes.
+
+**c) Configuración de OSPF en cada router:**
+```plaintext
+Hoth(config)# router ospf 1
+Hoth(config-router)# router-id 1.1.1.1
+Hoth(config-router)# network 10.0.1.0 0.0.0.63 area 0
+Hoth(config-router)# network 10.0.0.0 0.0.0.3 area 0
+```
+En HomeOne:
+```plaintext
+HomeOne(config)# router ospf 1
+HomeOne(config-router)# router-id 2.2.2.2
+HomeOne(config-router)# network 10.0.1.64 0.0.0.31 area 0
+HomeOne(config-router)# network 10.0.0.0 0.0.0.3 area 0
+HomeOne(config-router)# network 10.0.0.4 0.0.0.3 area 0
+```
+En Endor:
+```plaintext
+Endor(config)# router ospf 1
+Endor(config-router)# router-id 3.3.3.3
+Endor(config-router)# network 10.0.1.96 0.0.0.31 area 0
+Endor(config-router)# network 10.0.0.4 0.0.0.3 area 0
+```
+
+**d) Configuración de PCs (ejemplo Hoth):**
+- IP: 10.0.1.10
+- Máscara: 255.255.255.192
+- Gateway: 10.0.1.1
+
+**e) Verificación:**
+- En cada router:  
+  - `show ip ospf neighbor`  
+  - `show ip route`
+
+**Router Hoth**
+
+![RouterHoth](images/imagen6.png "RouterHoth")
+
+**Router HomeOne**
+
+![RouterHomeOne](images/imagen7.png "RouterHomeOne")
+
+**Router Endor**
+
+![RouterEndor](images/imagen8.png "RouterEndor")
+
+
+- Desde cualquier PC, intenta ping a una PC remota (ej. desde Hoth a HomeOne).
+
+![pingHothHomeOne](images/imagen9.png "Ping Hoth a HomeOne")
+
+
+---
+
 ## **Bibliografía**
 
 1. [Definición y tipos de enrutamiento dinámico - Universidad VIU](https://www.universidadviu.com/es/actualidad/nuestros-expertos/definicion-y-tipos-de-enrutamiento-dinamico#:~:text=,IS)
