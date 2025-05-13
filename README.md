@@ -1,5 +1,9 @@
 # RestauracionHoloRed
 
+Link del repositorio: https://github.com/PaxuitoGIT/RestauracionHoloRed
+
+Link de GithubPages: https://paxuitogit.github.io/RestauracionHoloRed/
+
 # Examen Final de Redes II  
 ## La Restauración de la HoloRed Galáctica
 
